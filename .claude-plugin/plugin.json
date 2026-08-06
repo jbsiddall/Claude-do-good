@@ -3,5 +3,5 @@
   "description": "Output styles that keep Claude's answers short and plain.",
   "version": "0.1.0",
   "license": "Apache-2.0",
-  "dependencies": ["caveman"]
+  "dependencies": ["caveman", "ponytail"]
 }

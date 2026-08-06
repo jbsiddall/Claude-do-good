@@ -17,7 +17,26 @@ Then turn the style on:
 /output-style ELI5
 ```
 
-Installing this also installs [caveman](https://github.com/JuliusBrussee/caveman), pinned to commit `fcf7663`. It compresses output further, and runs hooks at session start.
+Installing this also installs two pinned dependencies:
+
+- [caveman](https://github.com/JuliusBrussee/caveman), pinned to commit `fcf7663`. It compresses output further, and runs hooks at session start.
+- [ponytail](https://github.com/DietrichGebert/ponytail), pinned to commit `16f2980`. "Lazy senior dev mode" — pushes toward YAGNI, stdlib first, and the shortest solution that works.
+
+This plugin also configures a [Tavily](https://tavily.com) MCP server for web search. It needs a `TAVILY_API_KEY` environment variable set to a valid Tavily API key.
+
+### Setting `TAVILY_API_KEY`
+
+Don't export it in your shell — you'd have to redo that in every new shell. Instead, set it once in your **user** settings file (`~/.claude/settings.json`, not the project's `.claude/settings.json`, so it stays out of this repo and applies on every machine session regardless of which project you're in):
+
+```json
+{
+  "env": {
+    "TAVILY_API_KEY": "tvly-..."
+  }
+}
+```
+
+Claude Code injects that into every session's environment at startup, and `.mcp.json` picks it up from there. A `SessionStart` hook (`hooks/hooks.json` → `scripts/check-tavily-key.ts`, needs [Deno](https://deno.com)) checks for the key and warns if it's missing, so a forgotten key surfaces immediately instead of failing silently the first time a Tavily tool is called.
 
 ## Status: not published yet
 
@@ -39,8 +58,51 @@ A fix is prepared (resolve the script from `$CLAUDE_PLUGIN_ROOT`, where it
 already ships, instead of the network). Once it merges upstream, bump the `sha`
 in `.claude-plugin/marketplace.json` and publish.
 
+### ponytail audit (`16f2980`)
+
+Audited to the same bar as caveman, and came back clean: zero npm dependencies,
+no lifecycle (`postinstall`) scripts, and no network calls, `execSync`, or
+`eval` anywhere on the plugin path — every such call is confined to
+`benchmarks/`, which isn't in the package's published `files` list. No prompt
+injection. Like caveman's security-warning exemption, its ruleset carves out
+what laziness must never touch: "input validation at trust boundaries, error
+handling that prevents data loss, security measures, accessibility basics."
+
+Its one security-relevant control is solid. The `SessionStart` hook offers to
+add a statusline command to `~/.claude/settings.json`, and gates the embedded
+path through an `isShellSafe` allowlist (`/^[A-Za-z0-9 _.\-:/\\~]+$/`) that
+excludes quotes, `$`, backtick, `;`, `&`, and `|`, falling back to manual setup
+on a hostile install path.
+
+Two things to know, neither a blocker:
+
+- **Flag writes aren't symlink-hardened.** `setMode` calls `writeFileSync` on
+  `~/.claude/.ponytail-active` with no symlink check, where caveman's equivalent
+  is hardened. Low severity: exploiting it needs pre-existing write access to
+  `~/.claude` (at which point `settings.json` is directly writable anyway), and
+  the written content is constrained to one of five fixed mode words.
+- **This pin is ahead of the latest release.** `16f2980` is 53 commits past
+  `v4.8.4`, which is still the newest tag — so this tracks unreleased `main`,
+  not a cut release. That was deliberate (it picks up the fix that stops the
+  statusline nudge firing every session), but it means the pinned tree hasn't
+  been through a release.
+
+Those 53 commits were audited as a delta and are net-positive hardening: mode
+validation tightened so `review` can't be forced as a default, config writes no
+longer clobber sibling keys, BOM handling added, and the `isShellSafe` allowlist
+is unchanged. No new dependencies, network calls, `exec`, or `eval`. The one new
+knob, `PONYTAIL_SUBAGENT_MATCHER`, compiles a user-set env var to a regex and
+falls back to injecting on an invalid pattern.
+
+Note that ponytail's hooks run automatically on every session
+(`SessionStart`/`SubagentStart`/`UserPromptSubmit`) — a broader auto-run surface
+than caveman's, which only acts when a user types `/caveman-init`. The code on
+that path is clean, but it's the surface to re-check when bumping the pin.
+
 ## What's inside
 
 - `output-styles/eli5.md` — the style itself
 - `.claude-plugin/plugin.json` — plugin metadata
-- `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace
+- `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace, and pins the caveman and ponytail dependencies by `sha`
+- `.mcp.json` — configures the Tavily MCP server
+- `hooks/hooks.json`, `scripts/check-tavily-key.ts` — warns at session start if `TAVILY_API_KEY` is missing (requires Deno)
