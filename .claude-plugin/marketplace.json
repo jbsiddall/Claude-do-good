@@ -1,0 +1,22 @@
+{
+  "name": "claude-do-good",
+  "owner": {
+    "name": "Claude-do-good"
+  },
+  "plugins": [
+    {
+      "name": "claude-do-good",
+      "source": "./",
+      "description": "Output styles that keep Claude's answers short and plain."
+    },
+    {
+      "name": "caveman",
+      "description": "Ultra-compressed communication mode. Pulled in as a dependency of claude-do-good.",
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman",
+        "sha": "fcf7663366c217dc8f334a11028de52ed950ceab"
+      }
+    }
+  ]
+}
