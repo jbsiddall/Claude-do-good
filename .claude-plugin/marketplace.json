@@ -13,8 +13,8 @@
       "name": "caveman",
       "description": "Ultra-compressed communication mode. Pulled in as a dependency of claude-do-good.",
       "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman",
+        "source": "url",
+        "url": "https://github.com/JuliusBrussee/caveman.git",
         "sha": "fcf7663366c217dc8f334a11028de52ed950ceab"
       }
     },
@@ -22,8 +22,8 @@
       "name": "ponytail",
       "description": "Lazy senior dev mode — YAGNI, stdlib first, simplest solution that works. Pulled in as a dependency of claude-do-good.",
       "source": {
-        "source": "github",
-        "repo": "DietrichGebert/ponytail",
+        "source": "url",
+        "url": "https://github.com/DietrichGebert/ponytail.git",
         "sha": "16f29800fd2681bdf24f3eb4ccffe38be3baec6b"
       }
     }
