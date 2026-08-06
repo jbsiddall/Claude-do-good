@@ -17,6 +17,26 @@ Then turn the style on:
 /output-style ELI5
 ```
 
+### Turning it on automatically
+
+A plugin can't select its own output style — only one output style is active at
+a time, and that choice stays yours. To skip the `/output-style` step, set the
+`outputStyle` key yourself:
+
+- **Everywhere** — `~/.claude/settings.json` (your user settings, every project)
+- **One project** — that project's `.claude/settings.json`, which is shared with
+  anyone who clones it, or `.claude/settings.local.json` to keep it to yourself
+
+```json
+{
+  "outputStyle": "ELI5"
+}
+```
+
+This repo already sets it at the project level, so working *on* the plugin uses
+it. Note that `outputStyle` is read at startup — restart Claude Code (or
+`/clear`) for a change to take effect.
+
 Installing this also installs two pinned dependencies:
 
 - [caveman](https://github.com/JuliusBrussee/caveman), pinned to commit `fcf7663`. It compresses output further, and runs hooks at session start.
