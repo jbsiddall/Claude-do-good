@@ -1,7 +1,3 @@
----
-requires_any: REQUIREMENTS.md, REQUIREMENTS_DISCREPANCIES.md, DOMAIN_KNOWLEDGE.md, IMPLEMENTATION_DECISIONS.md
----
-
 # Project documentation
 
 Four files at the repository root. Each is defined by when you read it; the rule

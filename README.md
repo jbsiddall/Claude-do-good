@@ -12,29 +12,69 @@ appends that put rules into every session.
 
 Style on: `/output-style ELI5`.
 
-Pulls in two pinned dependencies,
-[caveman](https://github.com/JuliusBrussee/caveman) and
-[ponytail](https://github.com/DietrichGebert/ponytail). Pins and their audits:
-[IMPLEMENTATION_DECISIONS.md](IMPLEMENTATION_DECISIONS.md).
-
 Tavily needs `TAVILY_API_KEY`. Missing? Hook says how, at session start.
 
 ## Contents
 
-- `session-start-appends/*.md` — appended to every session's context. Add file,
-  done. Optional `requires_any:` frontmatter makes one conditional on a path
-  existing in the working directory.
+- `session-start-appends/*.md` — appended to every session's context, filename
+  order. Add file, done. Currently: the project documentation convention, and
+  git rules for commits and PRs.
 - `scripts/session-start-appends.ts` — reads that directory. Needs Deno.
 - `scripts/check-tavily-key.ts` — warns on missing key, says how to set it.
 - `output-styles/eli5.md` — the style.
 - `.mcp.json` — Tavily server. `hooks/hooks.json` — both hooks.
-- `IMPLEMENTATION_DECISIONS.md` — standing choices. Read before reversing one.
 
 Nothing writes to disk. Appends go to session context, not `CLAUDE.md`. Disable
 plugin, text gone.
 
-## Status
+## Pinned dependencies
 
-Not published yet. Blocker: caveman's `/caveman-init` fetches an unpinned script
-at runtime, so the SHA pin misses it. Nothing auto-runs it. Detail and fix in
-[IMPLEMENTATION_DECISIONS.md](IMPLEMENTATION_DECISIONS.md).
+[caveman](https://github.com/JuliusBrussee/caveman) at `fcf7663` and
+[ponytail](https://github.com/DietrichGebert/ponytail) at `16f2980`, pinned by
+`sha` in `.claude-plugin/marketplace.json`. Both audited. **Read this before
+bumping either pin.**
+
+### caveman — clean
+
+No npm dependencies at all, no network calls on the plugin path, no prompt
+injection. Terseness rules explicitly exempt security warnings.
+
+**Blocks publication.** `/caveman-init` runs
+`curl -fsSL .../main/src/tools/caveman-init.js | node -` — unpinned branch,
+fetched at runtime, so the SHA pin does not cover it. Nothing auto-installs or
+auto-runs it; only a user typing that command. Fix prepared upstream: resolve
+the script from `$CLAUDE_PLUGIN_ROOT`, where it already ships. On merge, bump
+`sha` and publish.
+
+### ponytail — clean
+
+Zero npm dependencies, no `postinstall`, and no network calls, `execSync` or
+`eval` on the plugin path — all confined to `benchmarks/`, not in the published
+`files` list. No prompt injection. Its ruleset exempts input validation at trust
+boundaries, error handling that prevents data loss, security measures and
+accessibility basics.
+
+Its statusline hook writes `~/.claude/settings.json`, gating the embedded path
+through an `isShellSafe` allowlist (`/^[A-Za-z0-9 _.\-:/\\~]+$/`) excluding
+quotes, `$`, backtick, `;`, `&` and `|`, falling back to manual setup on a
+hostile install path.
+
+Two non-blockers:
+
+- **Flag writes not symlink-hardened.** `setMode` calls `writeFileSync` on
+  `~/.claude/.ponytail-active` with no symlink check; caveman's equivalent is
+  hardened. Exploiting it needs pre-existing write access to `~/.claude`, where
+  `settings.json` is already writable anyway, and content is limited to five
+  fixed mode words.
+- **Pin is 53 commits past `v4.8.4`**, still the newest tag, so it tracks
+  unreleased `main`. Deliberate — picks up the fix stopping the statusline nudge
+  firing every session. Delta audited, net-positive hardening: mode validation
+  tightened so `review` cannot be forced as a default, config writes no longer
+  clobber sibling keys, BOM handling added, `isShellSafe` unchanged. No new
+  dependencies, network calls, `exec` or `eval`. One new knob,
+  `PONYTAIL_SUBAGENT_MATCHER`, compiles an env var to a regex and falls back to
+  injecting on an invalid pattern.
+
+ponytail's hooks run every session (`SessionStart`, `SubagentStart`,
+`UserPromptSubmit`) — broader auto-run surface than caveman's, which acts only
+on `/caveman-init`. That path is clean, but re-check it when bumping.

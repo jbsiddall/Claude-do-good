@@ -10,7 +10,7 @@
           },
           {
             "type": "command",
-            "command": "deno run --allow-read=.,\"${CLAUDE_PLUGIN_ROOT}\" \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start-appends.ts\""
+            "command": "deno run --allow-read=\"${CLAUDE_PLUGIN_ROOT}\" \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start-appends.ts\""
           }
         ]
       }
