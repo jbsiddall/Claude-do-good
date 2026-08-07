@@ -1,6 +1,6 @@
 # Project documentation
 
-Four files at the repository root. Each is defined by when you read it; the rule
+Five files at the repository root. Each is defined by when you read it; the rule
 for writing to it is the same rule backwards. Read the relevant one before
 acting. Never restate one file's content in another.
 
@@ -21,32 +21,40 @@ Headings are stable slugs. Reword a body freely; never rename a slug, because
 code links to its anchor. Changing or deleting a requirement means deleting its
 rows in REQUIREMENTS_DISCREPANCIES.md in the same change.
 
-## REQUIREMENTS_DISCREPANCIES.md — accepted shortfalls
+## REQUIREMENTS_DISCREPANCIES.md — every known-bad thing that was triaged
 
-Read whenever the implementation does not match a requirement.
+Read whenever something looks wrong, before reporting it as new.
 
-- Listed: known. Still open REQUIREMENTS.md and confirm the slug is still there.
-  Gone means the row is stale — report it.
+- Listed: known. If the row names a requirement, open REQUIREMENTS.md and
+  confirm the slug is still there. Gone means the row is stale — report it.
 - Not listed: not triaged. Report it. Never assume it was accepted.
 
-Write a row when a shortfall is accepted. Delete the row when it is fixed.
+Write a row when a known-bad thing is accepted or triaged. Delete it when fixed.
 
 ```markdown
-| Requirement | Reason | Basis |
+| Subject | Reason | Basis |
 | --- | --- | --- |
 | [mic-permission](REQUIREMENTS.md#mic-permission) | not feasible | No API persists a getUserMedia grant — [Browser](DOMAIN_KNOWLEDGE.md#browser) |
 | [dark-mode](REQUIREMENTS.md#dark-mode) | not implemented | #412 |
-| [copy-message](REQUIREMENTS.md#copy-message) | bug | #398 |
+| [export-transcript](REQUIREMENTS.md#export-transcript) | by policy | [transcript-export](IMPLEMENTATION_DECISIONS.md#transcript-export) |
+| `session_test.ts` flakes ~3 runs in 200, timing, undiagnosed | bug | #431 |
+| Per-session dirs under `run/` are never pruned | by policy | [session-dirs](IMPLEMENTATION_DECISIONS.md#session-dirs) |
 ```
 
-`Reason` is exactly one of `not feasible`, `not implemented`, `bug`. Only
-`not feasible` means stop; the other two mean known but still open.
+`Subject` is a requirement link, or — when no requirement covers it — the thing
+itself in one line. A flaky test, an unpruned directory, a test-only import
+reachable from production: no slug, still a row.
+
+`Reason` is exactly one of `not feasible`, `by policy`, `not implemented`,
+`bug`. The first two mean stop; the other two mean known but still open.
 
 `Basis` is required, and is one sentence or a link. `not feasible` points at a
 dated DOMAIN_KNOWLEDGE.md anchor, so it can be re-checked when the world
-changes. `bug` carries an issue link — open the issue first if there is none.
+changes. `by policy` — feasible, deliberately withheld or deliberately lived
+with — points at the IMPLEMENTATION_DECISIONS.md anchor that decided it. `bug`
+carries an issue link — open the issue first if there is none.
 
-Every accepted shortfall appears here. Not every bug does. Absence means
+Every triaged known-bad thing appears here. Not every bug does. Absence means
 untriaged, never "does not exist".
 
 ## DOMAIN_KNOWLEDGE.md — how external things really behave
@@ -70,21 +78,51 @@ was observed; an undated claim is worthless.
 
 ## IMPLEMENTATION_DECISIONS.md — the choices currently standing
 
-Choices among options that all could have worked. Read before reversing a
-precedent: a convention, a library, an architecture, a naming scheme.
+Choices among options that all could have worked, and invariants that must keep
+holding. Read before reversing a precedent: a convention, a library, an
+architecture, a naming scheme, a line two things must not cross.
 
 Write when reversing it later would want to know why it was set.
+
+An entry has four parts, and one missing part makes it read stronger than it is:
+the choice, the options rejected and why, the cost knowingly accepted, and the
+evidence — a command to re-run, a recipe, or a dated run.
 
 ```
 Yes: Colour lives only in the @theme block in assets/styles.css; islands use
      semantic utilities. Rejected: palette classes per component, which put a
-     theme change in 40 files. Check: `grep -rE "blue-[0-9]" islands/` is empty.
-No:  We use zod for validation.      <- deno.json already says so
+     theme change in 40 files. Cost: a new shade needs a token before it can be
+     used. Check: `grep -rE "blue-[0-9]" islands/` is empty.
+No:  We use zod for validation.   <- deno.json already says so
+No:  Startup is under 200ms.      <- a conclusion with no way to re-test
 ```
 
-Record the rejected options and why, not only the choice. This is a living
-document, not a log: replace a reversed entry in place. Git holds the history,
-and the person deleting an entry is the one who needed to read it.
+Never drop a cost or a piece of evidence as noise. A stripped entry cannot be
+falsified, and reads more confident than the day it was written. A claim you
+could not prove goes in an `Unproven` section, named, until it is proved or the
+entry is withdrawn. Evidence that is an observation of an external tool lives in
+DOMAIN_KNOWLEDGE.md — link its anchor rather than copying it.
+
+This is a living document, not a log: replace a reversed entry in place, cost
+and evidence with it. Git holds the history, and the person deleting an entry is
+the one who needed to read it.
+
+## DEVELOPMENT.md — how the work is done
+
+The other four describe the product. This one describes building, testing,
+releasing and CI. Read before running a build, a test suite or a release, and
+before touching CI.
+
+Write only what the repo does not already say: what is deliberately not
+enforced, what a task quietly does not do, which step is not the obvious one.
+
+```
+Yes: `deno lint` is deliberately not a CI gate. Only `deno check` and
+     `deno test` block a merge.
+Yes: `task dev` passes no `--config`, so it silently ignores
+     ~/.config/app/config.toml. Run `deno task dev --config <path>` instead.
+No:  `deno test` runs the tests.     <- deno.json already says so
+```
 
 ## Deleting code
 
