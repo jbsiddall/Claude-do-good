@@ -88,10 +88,15 @@ The files are prompt, not documentation, and their cost is paid on every
 session, so they compress. Commit messages and PR bodies do not: a human reads
 those months later and needs the articles.
 
-## No README
+## The README points, it does not explain
 
-Rejected: a README, which duplicated what the code already says and drifts. The
-two load-bearing parts moved instead — the Tavily setup instructions into
-`scripts/check-tavily-key.ts` itself, where they appear at the moment they are
-needed and cannot fall out of sync, and the dependency audits into this file,
-where they are read at the moment they matter, which is bumping a pin.
+Rejected: **the old README**, 108 lines restating what the code already said,
+and drifting. Rejected: **no README at all**, which leaves the repository's
+landing page blank and the install steps homeless.
+
+What it keeps is what nothing else can carry: what the plugin is, how to install
+it, and where everything lives. What drifts moved to where it cannot. The Tavily
+setup instructions went into `scripts/check-tavily-key.ts`, so they appear at
+the moment the key is missing rather than in a document nobody opens. The
+dependency audits came here, where they are read at the one moment they matter,
+which is bumping a pin.
