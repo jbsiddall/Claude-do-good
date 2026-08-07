@@ -1,5 +1,5 @@
 {
-  "description": "Warn at session start if TAVILY_API_KEY is missing, so the Tavily MCP server doesn't fail silently.",
+  "description": "Warn at session start if TAVILY_API_KEY is missing, so the Tavily MCP server doesn't fail silently. Also inject the project documentation rules, in repositories that use them.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": "deno run --allow-env \"${CLAUDE_PLUGIN_ROOT}/scripts/check-tavily-key.ts\""
+          },
+          {
+            "type": "command",
+            "command": "deno run --allow-read=. \"${CLAUDE_PLUGIN_ROOT}/scripts/project-docs-rule.ts\""
           }
         ]
       }

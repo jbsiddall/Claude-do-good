@@ -38,6 +38,23 @@ Don't export it in your shell — you'd have to redo that in every new shell. In
 
 Claude Code injects that into every session's environment at startup, and `.mcp.json` picks it up from there. A `SessionStart` hook (`hooks/hooks.json` → `scripts/check-tavily-key.ts`, needs [Deno](https://deno.com)) checks for the key and warns if it's missing, so a forgotten key surfaces immediately instead of failing silently the first time a Tavily tool is called.
 
+## Project documentation rules
+
+The plugin also ships a documentation convention as an always-on rule. Claude Code plugins cannot declare rules — `plugin.json` has no such field, and `.claude/rules/*.md` is a per-project location that would mean committing the rules into every repository that wants them. A `SessionStart` hook achieves the same thing from inside the plugin: it prints the convention as `additionalContext`, so it lands in every session without living in any repository.
+
+The convention is four files at the repository root, each defined by **when it is read** — the rule for writing to one is that same rule read backwards:
+
+| File | Read it when | Write to it when |
+| --- | --- | --- |
+| `REQUIREMENTS.md` | Deciding scope, or a product/UI choice is uncertain | The statement would still have to be true after a from-scratch rebuild on different technology |
+| `REQUIREMENTS_DISCREPANCIES.md` | The implementation doesn't match a requirement | A shortfall is accepted; delete the row when it's fixed |
+| `DOMAIN_KNOWLEDGE.md` | Before assuming how an external tool, API or platform behaves | A wrong assumption about it fails silently, slowly or intermittently |
+| `IMPLEMENTATION_DECISIONS.md` | Before reversing a precedent | Reversing it later would want to know why it was set |
+
+Two things fall out of that. Requirements headings are stable slugs, so code and other documents can link to an anchor and a `grep` finds every place a requirement is touched. And an agent gets a **deletion licence**: code traceable to a requirement or a standing decision stays, code traceable to neither was somebody's discretion and can go.
+
+`scripts/project-docs-rule.ts` only emits the rules when at least one of the four files exists, so repositories that don't use the convention pay nothing for it. It needs [Deno](https://deno.com), like the Tavily check.
+
 ## Status: not published yet
 
 Caveman at `fcf7663` was audited and is clean — no npm dependencies at all, no
@@ -106,3 +123,4 @@ that path is clean, but it's the surface to re-check when bumping the pin.
 - `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace, and pins the caveman and ponytail dependencies by `sha`
 - `.mcp.json` — configures the Tavily MCP server
 - `hooks/hooks.json`, `scripts/check-tavily-key.ts` — warns at session start if `TAVILY_API_KEY` is missing (requires Deno)
+- `scripts/project-docs-rule.ts` — injects the [project documentation rules](#project-documentation-rules) at session start, in repositories that use them (requires Deno)
