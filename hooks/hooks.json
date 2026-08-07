@@ -1,5 +1,5 @@
 {
-  "description": "Warn at session start if TAVILY_API_KEY is missing, so the Tavily MCP server doesn't fail silently. Also append every markdown file in session-start-appends/ to the session's context.",
+  "description": "Warn at session start if TAVILY_API_KEY is missing, so the Tavily MCP server doesn't fail silently. Append every markdown file in session-start-appends/ to the session's context. Remind the parent when a finished subagent left work in a worktree.",
   "hooks": {
     "SessionStart": [
       {
@@ -11,6 +11,16 @@
           {
             "type": "command",
             "command": "deno run --allow-read=\"${CLAUDE_PLUGIN_ROOT}\" \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start-appends.ts\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "deno run --allow-run=git \"${CLAUDE_PLUGIN_ROOT}/scripts/worktree-reminder.ts\""
           }
         ]
       }
