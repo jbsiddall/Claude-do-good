@@ -13,8 +13,12 @@ branch's commits. This repository sets `head` in `.claude/settings.json`:
 
 **What the harness does and does not do.**
 
-- A worktree is a **new branch**, checked out under `.claude/worktrees/`.
-- It is auto-cleaned **only if unchanged**. With changes, it stays on disk.
+- A worktree is a **new branch**, checked out under `.claude/worktrees/`. Being
+  a fresh checkout, gitignored files like `.env` are missing — list them in a
+  `.worktreeinclude` at the project root, `.gitignore` syntax, or the subagent
+  fails on absent config in a way that reads like a code bug.
+- It is auto-cleaned **only if unchanged**. Holding work, it stays on disk
+  indefinitely: the periodic sweep skips exactly the worktrees that matter.
 - `ExitWorktree` with `remove` **refuses** while there are uncommitted files or
   unmerged commits, unless you pass `discard_changes: true`.
 - **Nothing merges automatically.** The coordinator merges, cherry-picks or

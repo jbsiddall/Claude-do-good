@@ -46,7 +46,10 @@ try {
       commits ? `${commits} commit${commits === 1 ? "" : "s"}` : "",
       dirty ? "uncommitted changes" : "",
     ].filter(Boolean).join(" and ");
-    found.push(`- \`${path}\` on branch \`${branch}\` — ${holds}`);
+    // Claude Code locks a worktree while its agent runs. `remove --force` exits
+    // 128 on a locked one, so don't hand out advice that fails.
+    const locked = /^locked/m.test(block) ? " (locked — `git worktree unlock` it first)" : "";
+    found.push(`- \`${path}\` on branch \`${branch}\` — ${holds}${locked}`);
   }
 
   if (found.length === 0) Deno.exit(0);
