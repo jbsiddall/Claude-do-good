@@ -23,7 +23,7 @@ rows in REQUIREMENTS_DISCREPANCIES.md in the same change.
 
 ## REQUIREMENTS_DISCREPANCIES.md — accepted shortfalls
 
-Read whenever the implementation does not match a requirement.
+Read whenever you find the implementation not matching a requirement.
 
 - Listed: known. Still open REQUIREMENTS.md and confirm the slug is still there.
   Gone means the row is stale — report it.
@@ -70,21 +70,34 @@ was observed; an undated claim is worthless.
 
 ## IMPLEMENTATION_DECISIONS.md — the choices currently standing
 
-Choices among options that all could have worked. Read before reversing a
-precedent: a convention, a library, an architecture, a naming scheme.
+Choices among options that all could have worked, and invariants that must keep
+holding. Read before reversing a precedent: a convention, a library, an
+architecture, a naming scheme, a line two things must not cross.
 
 Write when reversing it later would want to know why it was set.
+
+An entry has four parts, and one missing part makes it read stronger than it is:
+the choice, the options rejected and why, the cost knowingly accepted, and the
+evidence — a command to re-run, a recipe, or a dated run.
 
 ```
 Yes: Colour lives only in the @theme block in assets/styles.css; islands use
      semantic utilities. Rejected: palette classes per component, which put a
-     theme change in 40 files. Check: `grep -rE "blue-[0-9]" islands/` is empty.
-No:  We use zod for validation.      <- deno.json already says so
+     theme change in 40 files. Cost: a new shade needs a token before it can be
+     used. Check: `grep -rE "blue-[0-9]" islands/` is empty.
+No:  We use zod for validation.   <- deno.json already says so
+No:  Startup is under 200ms.      <- a conclusion with no way to re-test
 ```
 
-Record the rejected options and why, not only the choice. This is a living
-document, not a log: replace a reversed entry in place. Git holds the history,
-and the person deleting an entry is the one who needed to read it.
+Never drop a cost or a piece of evidence as noise. A stripped entry cannot be
+falsified, and reads more confident than the day it was written. A claim you
+could not prove goes in an `Unproven` section, named, until it is proved or the
+entry is withdrawn. Evidence that is an observation of an external tool lives in
+DOMAIN_KNOWLEDGE.md — link its anchor rather than copying it.
+
+This is a living document, not a log: replace a reversed entry in place, cost
+and evidence with it. Git holds the history, and the person deleting an entry is
+the one who needed to read it.
 
 ## Deleting code
 
