@@ -53,7 +53,28 @@ The convention is four files at the repository root, each defined by **when it i
 
 Two things fall out of that. Requirements headings are stable slugs, so code and other documents can link to an anchor and a `grep` finds every place a requirement is touched. And an agent gets a **deletion licence**: code traceable to a requirement or a standing decision stays, code traceable to neither was somebody's discretion and can go.
 
-`scripts/project-docs-rule.ts` only emits the rules when at least one of the four files exists, so repositories that don't use the convention pay nothing for it. It needs [Deno](https://deno.com), like the Tavily check.
+### Adding a rule
+
+Rules are plain markdown in `rules/`. `scripts/session-rules.ts` reads every `.md` file there at session start and injects them, so adding a rule means adding a file and nothing else. It needs [Deno](https://deno.com), like the Tavily check.
+
+One optional frontmatter key makes a rule conditional:
+
+```markdown
+---
+requires_any: REQUIREMENTS.md, DOMAIN_KNOWLEDGE.md
+---
+```
+
+A rule declaring `requires_any` is injected only when at least one of those paths exists in the working directory, and gains a line saying which are present and which are not. Without the key, a rule is always injected. That is how the documentation rules above cost nothing in repositories that don't use the convention.
+
+## Skills
+
+Two skills, both auto-triggering — you don't invoke them, Claude reaches for them at the right moment.
+
+- **`git-commit`** — fires whenever a commit is about to happen. Reviews what is staged (including a check for credentials caught by a broad `git add`), branches off the default branch first, then writes a subject in imperative mood under 72 characters with a body that explains *why*.
+- **`ship-it`** — fires when work is finished and code has changed. Runs the project's checks, reviews the whole branch rather than the last commit, pushes, and opens a PR whose body leads with what changed and why, states what was deliberately left undone, and names the commands used to verify.
+
+Both write in **caveman-lite** — no filler or hedging, but articles and full sentences kept, because a commit message and a PR body are persisted prose a human reads later. This is deliberately not the session's caveman level: caveman's own rules exempt persisted artifacts from compression, and the skills reference the register rather than switching the session, so neither one changes how Claude talks to you.
 
 ## Status: not published yet
 
@@ -123,4 +144,6 @@ that path is clean, but it's the surface to re-check when bumping the pin.
 - `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace, and pins the caveman and ponytail dependencies by `sha`
 - `.mcp.json` — configures the Tavily MCP server
 - `hooks/hooks.json`, `scripts/check-tavily-key.ts` — warns at session start if `TAVILY_API_KEY` is missing (requires Deno)
-- `scripts/project-docs-rule.ts` — injects the [project documentation rules](#project-documentation-rules) at session start, in repositories that use them (requires Deno)
+- `rules/*.md` — always-on rules injected at session start; currently the [project documentation rules](#project-documentation-rules)
+- `scripts/session-rules.ts` — reads `rules/` and injects it (requires Deno)
+- `skills/git-commit/`, `skills/ship-it/` — auto-triggering [skills](#skills) for commits and pull requests

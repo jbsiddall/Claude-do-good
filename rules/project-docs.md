@@ -1,38 +1,12 @@
-#!/usr/bin/env -S deno run --allow-read=.
+---
+requires_any: REQUIREMENTS.md, REQUIREMENTS_DISCREPANCIES.md, DOMAIN_KNOWLEDGE.md, IMPLEMENTATION_DECISIONS.md
+---
 
-// Injects the project-documentation convention as an always-on rule, but only
-// in repositories that actually use it. A repository with none of these four
-// files gets nothing, so this costs unrelated projects no context.
-
-const DOCS = [
-  "REQUIREMENTS.md",
-  "REQUIREMENTS_DISCREPANCIES.md",
-  "DOMAIN_KNOWLEDGE.md",
-  "IMPLEMENTATION_DECISIONS.md",
-];
-
-const present = DOCS.filter((name) => {
-  try {
-    return Deno.statSync(name).isFile;
-  } catch {
-    return false;
-  }
-});
-
-if (present.length === 0) Deno.exit(0);
-
-const missing = DOCS.filter((name) => !present.includes(name));
-
-const inventory = [
-  `Present in this repository: ${present.join(", ")}.`,
-  missing.length ? `Not yet created: ${missing.join(", ")}.` : "",
-].filter(Boolean).join(" ");
-
-const rules = `# Project documentation rules
+# Project documentation rules
 
 This project keeps its long-lived knowledge in four files at the repository
 root. Each file is defined by *when it is read*; the rule for writing to it is
-the same rule read backwards. ${inventory}
+the same rule read backwards.
 
 Read the relevant file before acting on the area it covers. Do not restate its
 contents anywhere else.
@@ -65,13 +39,13 @@ Write when a shortfall is accepted. Delete the row when it is fixed.
 
 Columns: Requirement (link to the slug anchor) | Reason | Basis.
 
-- Reason is one of \`not feasible\`, \`not implemented\`, \`bug\`. Only
-  \`not feasible\` means stop. The other two mean known but still open work.
+- Reason is one of `not feasible`, `not implemented`, `bug`. Only `not feasible`
+  means stop. The other two mean known but still open work.
 - Basis is mandatory, and capped at one sentence or a link.
-  - \`not feasible\` points at a dated DOMAIN_KNOWLEDGE.md anchor, so the
+  - `not feasible` points at a dated DOMAIN_KNOWLEDGE.md anchor, so the
     infeasibility can be re-checked when the external world changes.
-  - \`bug\` carries an issue link. If no issue exists, open one before adding
-    the row.
+  - `bug` carries an issue link. If no issue exists, open one before adding the
+    row.
 
 Completeness runs one way only: every accepted shortfall appears here, but not
 every known bug needs to.
@@ -87,7 +61,7 @@ intermittently**. A wrong assumption that fails immediately with a clear error
 is rediscovered for free and does not belong here.
 
 - Verified observations only. Never phrase an inference as an observation.
-  Anything not directly observed goes in an \`Unverified\` section or nowhere.
+  Anything not directly observed goes in an `Unverified` section or nowhere.
 - Every claim states the version observed and the date observed. An undated
   claim is worthless, because external behaviour changes between releases.
 - Skip the obvious. Documented behaviour that behaves as documented is not a
@@ -126,11 +100,4 @@ removed. Check both files before deleting something that looks arbitrary.
 
 Each fact lives in exactly one of these files. Cross-reference by slug or
 anchor; never restate. README.md indexes these documents rather than
-duplicating them.`;
-
-console.log(JSON.stringify({
-  hookSpecificOutput: {
-    hookEventName: "SessionStart",
-    additionalContext: rules,
-  },
-}));
+duplicating them.
