@@ -1,7 +1,12 @@
 #!/usr/bin/env -S deno run --allow-read
 
-// Injects every rule in ../rules/*.md into the session as additionalContext.
-// Adding a rule means adding a markdown file; nothing here needs changing.
+// Appends every ../session-start-appends/*.md file to the session's context, as
+// SessionStart additionalContext. Nothing is written to disk and no repository
+// file is touched — the text sits alongside CLAUDE.md for the session only, and
+// disabling the plugin removes it.
+//
+// Adding one means adding a markdown file; nothing here changes. Files are
+// appended in filename order, so prefix them (10-, 20-) when order matters.
 //
 // Optional frontmatter, one key:
 //
@@ -9,11 +14,12 @@
 //   requires_any: REQUIREMENTS.md, DOMAIN_KNOWLEDGE.md
 //   ---
 //
-// A rule with `requires_any` is injected only when at least one of those paths
-// exists in the working directory, and gains a line listing which are present.
-// Without the key, a rule is always injected.
+// A file with `requires_any` is appended only when at least one of those paths
+// exists in the working directory, and gains a line naming which are present.
+// Without the key, a file is always appended.
 
-const rulesDir = new URL("../rules/", import.meta.url).pathname;
+const appendsDir = new URL("../session-start-appends/", import.meta.url)
+  .pathname;
 
 const exists = (path: string) => {
   try {
@@ -23,15 +29,15 @@ const exists = (path: string) => {
   }
 };
 
-const files = [...Deno.readDirSync(rulesDir)]
+const files = [...Deno.readDirSync(appendsDir)]
   .filter((entry) => entry.isFile && entry.name.endsWith(".md"))
   .map((entry) => entry.name)
   .sort();
 
-const rules: string[] = [];
+const appends: string[] = [];
 
 for (const name of files) {
-  const raw = Deno.readTextFileSync(rulesDir + name);
+  const raw = Deno.readTextFileSync(appendsDir + name);
   const frontmatter = raw.match(/^---\n([\s\S]*?)\n---\n/);
   const body = (frontmatter ? raw.slice(frontmatter[0].length) : raw).trim();
 
@@ -39,7 +45,7 @@ for (const name of files) {
     .split(",").map((path) => path.trim()).filter(Boolean);
 
   if (!declared) {
-    rules.push(body);
+    appends.push(body);
     continue;
   }
 
@@ -47,17 +53,17 @@ for (const name of files) {
   if (present.length === 0) continue;
 
   const missing = declared.filter((path) => !present.includes(path));
-  rules.push(
+  appends.push(
     `${body}\n\nPresent in this repository: ${present.join(", ")}.` +
       (missing.length ? ` Not yet created: ${missing.join(", ")}.` : ""),
   );
 }
 
-if (rules.length === 0) Deno.exit(0);
+if (appends.length === 0) Deno.exit(0);
 
 console.log(JSON.stringify({
   hookSpecificOutput: {
     hookEventName: "SessionStart",
-    additionalContext: rules.join("\n\n---\n\n"),
+    additionalContext: appends.join("\n\n---\n\n"),
   },
 }));

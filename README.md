@@ -40,7 +40,7 @@ Claude Code injects that into every session's environment at startup, and `.mcp.
 
 ## Project documentation rules
 
-The plugin also ships a documentation convention as an always-on rule. Claude Code plugins cannot declare rules — `plugin.json` has no such field, and `.claude/rules/*.md` is a per-project location that would mean committing the rules into every repository that wants them. A `SessionStart` hook achieves the same thing from inside the plugin: it prints the convention as `additionalContext`, so it lands in every session without living in any repository.
+The plugin also ships a documentation convention that loads into every session. Claude Code plugins **cannot declare rules** — `plugin.json` has no such field, and `.claude/rules/*.md` is a per-project location that would mean committing the convention into every repository that wants it. A `SessionStart` hook gets the same always-on behaviour from inside the plugin: it prints the convention as `additionalContext`, so the text sits alongside `CLAUDE.md` for the session without living in any repository. Nothing is written to disk, and disabling the plugin removes it.
 
 The convention is four files at the repository root, each defined by **when it is read** — the rule for writing to one is that same rule read backwards:
 
@@ -53,11 +53,15 @@ The convention is four files at the repository root, each defined by **when it i
 
 Two things fall out of that. Requirements headings are stable slugs, so code and other documents can link to an anchor and a `grep` finds every place a requirement is touched. And an agent gets a **deletion licence**: code traceable to a requirement or a standing decision stays, code traceable to neither was somebody's discretion and can go.
 
-### Adding a rule
+## Session-start appends
 
-Rules are plain markdown in `rules/`. `scripts/session-rules.ts` reads every `.md` file there at session start and injects them, so adding a rule means adding a file and nothing else. It needs [Deno](https://deno.com), like the Tavily check.
+`session-start-appends/` holds plain markdown. `scripts/session-start-appends.ts` reads every `.md` file in it at session start and appends them all to the session's context, so adding one means adding a file and changing nothing else. It needs [Deno](https://deno.com), like the Tavily check.
 
-One optional frontmatter key makes a rule conditional:
+The directory is **not** a Claude Code plugin component — no such component exists. It is an ordinary folder that this plugin's own script reads, which is why it is named after what the script does rather than after a component type.
+
+Files are appended in filename order, so prefix them (`10-`, `20-`) when order matters.
+
+One optional frontmatter key makes a file conditional:
 
 ```markdown
 ---
@@ -65,7 +69,7 @@ requires_any: REQUIREMENTS.md, DOMAIN_KNOWLEDGE.md
 ---
 ```
 
-A rule declaring `requires_any` is injected only when at least one of those paths exists in the working directory, and gains a line saying which are present and which are not. Without the key, a rule is always injected. That is how the documentation rules above cost nothing in repositories that don't use the convention.
+A file declaring `requires_any` is appended only when at least one of those paths exists in the working directory, and gains a line saying which are present and which are not. Without the key, a file is always appended. That is how the documentation convention above costs nothing in repositories that don't use it.
 
 ## Skills
 
@@ -144,6 +148,6 @@ that path is clean, but it's the surface to re-check when bumping the pin.
 - `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace, and pins the caveman and ponytail dependencies by `sha`
 - `.mcp.json` — configures the Tavily MCP server
 - `hooks/hooks.json`, `scripts/check-tavily-key.ts` — warns at session start if `TAVILY_API_KEY` is missing (requires Deno)
-- `rules/*.md` — always-on rules injected at session start; currently the [project documentation rules](#project-documentation-rules)
-- `scripts/session-rules.ts` — reads `rules/` and injects it (requires Deno)
+- `session-start-appends/*.md` — markdown appended to every session's context; currently the [project documentation rules](#project-documentation-rules)
+- `scripts/session-start-appends.ts` — reads that directory and appends it (requires Deno)
 - `skills/git-commit/`, `skills/ship-it/` — auto-triggering [skills](#skills) for commits and pull requests
