@@ -2,102 +2,96 @@
 requires_any: REQUIREMENTS.md, REQUIREMENTS_DISCREPANCIES.md, DOMAIN_KNOWLEDGE.md, IMPLEMENTATION_DECISIONS.md
 ---
 
-# Project documentation rules
+# Project documentation
 
-This project keeps its long-lived knowledge in four files at the repository
-root. Each file is defined by *when it is read*; the rule for writing to it is
-the same rule read backwards.
-
-Read the relevant file before acting on the area it covers. Do not restate its
-contents anywhere else.
+Four files at the repository root. Each is defined by when you read it; the rule
+for writing to it is the same rule backwards. Read the relevant one before
+acting. Never restate one file's content in another.
 
 ## REQUIREMENTS.md — what must be true of the product
 
-Read when deciding whether something is in scope, or when a product or UI
-decision is uncertain.
+Read when deciding scope, or when a product or UI decision is uncertain.
 
-Write when the statement would still have to be true after a from-scratch
-rebuild on entirely different technology. If it would not, it is not a
-requirement.
+Write it only if it would still be true after a from-scratch rebuild on entirely
+different technology.
 
-- State outcomes, never mechanism. How something is achieved belongs in
-  IMPLEMENTATION_DECISIONS.md.
-- Each heading is a stable slug. Reword the body freely; never rename a slug,
-  because code and other documents link to its anchor.
-- Changing or deleting a requirement means clearing its rows in
-  REQUIREMENTS_DISCREPANCIES.md in the same change.
+```
+Yes: The conversation survives a page reload.
+No:  The transcript is restored from a signed cookie.   <- mechanism
+No:  Panels switch to overlays below 1200px.            <- mechanism
+```
 
-## REQUIREMENTS_DISCREPANCIES.md — where the implementation knowingly falls short
+Headings are stable slugs. Reword a body freely; never rename a slug, because
+code links to its anchor. Changing or deleting a requirement means deleting its
+rows in REQUIREMENTS_DISCREPANCIES.md in the same change.
 
-Read whenever you find the implementation not matching a requirement.
+## REQUIREMENTS_DISCREPANCIES.md — accepted shortfalls
 
-- Listed: known. Still follow the slug back to REQUIREMENTS.md and confirm the
-  requirement is still there. If the slug is gone, the row is stale — report it.
-- Not listed: not triaged. Report it rather than assuming it is accepted.
+Read whenever the implementation does not match a requirement.
 
-Write when a shortfall is accepted. Delete the row when it is fixed.
+- Listed: known. Still open REQUIREMENTS.md and confirm the slug is still there.
+  Gone means the row is stale — report it.
+- Not listed: not triaged. Report it. Never assume it was accepted.
 
-Columns: Requirement (link to the slug anchor) | Reason | Basis.
+Write a row when a shortfall is accepted. Delete the row when it is fixed.
 
-- Reason is one of `not feasible`, `not implemented`, `bug`. Only `not feasible`
-  means stop. The other two mean known but still open work.
-- Basis is mandatory, and capped at one sentence or a link.
-  - `not feasible` points at a dated DOMAIN_KNOWLEDGE.md anchor, so the
-    infeasibility can be re-checked when the external world changes.
-  - `bug` carries an issue link. If no issue exists, open one before adding the
-    row.
+```markdown
+| Requirement | Reason | Basis |
+| --- | --- | --- |
+| [mic-permission](REQUIREMENTS.md#mic-permission) | not feasible | No API persists a getUserMedia grant — [Browser](DOMAIN_KNOWLEDGE.md#browser) |
+| [dark-mode](REQUIREMENTS.md#dark-mode) | not implemented | #412 |
+| [copy-message](REQUIREMENTS.md#copy-message) | bug | #398 |
+```
 
-Completeness runs one way only: every accepted shortfall appears here, but not
-every known bug needs to.
+`Reason` is exactly one of `not feasible`, `not implemented`, `bug`. Only
+`not feasible` means stop; the other two mean known but still open.
 
-## DOMAIN_KNOWLEDGE.md — how external things actually behave
+`Basis` is required, and is one sentence or a link. `not feasible` points at a
+dated DOMAIN_KNOWLEDGE.md anchor, so it can be re-checked when the world
+changes. `bug` carries an issue link — open the issue first if there is none.
+
+Every accepted shortfall appears here. Not every bug does. Absence means
+untriaged, never "does not exist".
+
+## DOMAIN_KNOWLEDGE.md — how external things really behave
 
 One H1 per domain: a CLI, an API, a browser, a runtime.
 
 Read before assuming how any external tool, API or platform behaves.
 
-Write only when a wrong assumption about it fails **silently, slowly, or
-intermittently**. A wrong assumption that fails immediately with a clear error
-is rediscovered for free and does not belong here.
+Write only when a wrong assumption fails **silently, slowly or intermittently**.
 
-- Verified observations only. Never phrase an inference as an observation.
-  Anything not directly observed goes in an `Unverified` section or nowhere.
-- Every claim states the version observed and the date observed. An undated
-  claim is worthless, because external behaviour changes between releases.
-- Skip the obvious. Documented behaviour that behaves as documented is not a
-  finding.
+```
+Yes: `--permission-mode manual` never asks for approval. It auto-denies in
+     silence. (claude 2.1.217, 2026-08-04)
+No:  `deno compile` fails on NixOS with "Could not start dynamically linked
+     executable".      <- loud and immediate, so it is rediscovered for free
+```
+
+Observations only, never inference. Anything not directly observed goes in an
+`Unverified` section or nowhere. Every claim states the version and the date it
+was observed; an undated claim is worthless.
 
 ## IMPLEMENTATION_DECISIONS.md — the choices currently standing
 
-Choices among options that all could have worked.
+Choices among options that all could have worked. Read before reversing a
+precedent: a convention, a library, an architecture, a naming scheme.
 
-Read before reversing a precedent: a convention, a library, an architecture, a
-naming scheme.
+Write when reversing it later would want to know why it was set.
 
-Write when, at the moment someone later moves to reverse the decision, this
-entry would change whether they should. Nothing else earns a line.
+```
+Yes: Colour lives only in the @theme block in assets/styles.css; islands use
+     semantic utilities. Rejected: palette classes per component, which put a
+     theme change in 40 files. Check: `grep -rE "blue-[0-9]" islands/` is empty.
+No:  We use zod for validation.      <- deno.json already says so
+```
 
-- Record the rejected options and why they were rejected, not only the choice.
-  Without that a future reader has nothing to weigh, and repeats either the
-  original investigation or the original mistake.
-- A decision the code already states is not worth an entry. That a validation
-  library is used is visible in the manifest; that its schemas reject unknown
-  keys so a typo is a hard error is not.
-- This is a living document, not a log. When a decision is reversed, replace the
-  entry in place rather than appending a contradiction. Version control holds
-  the history, and the person deleting an entry is the one who needed to read
-  it.
-- Unlike the other three, this file has no value for reconstructing the product
-  from scratch. It describes choices about code that exists.
+Record the rejected options and why, not only the choice. This is a living
+document, not a log: replace a reversed entry in place. Git holds the history,
+and the person deleting an entry is the one who needed to read it.
 
-## Deletion licence
+## Deleting code
 
-Code traceable to a requirement or to a standing implementation decision stays.
-Code traceable to neither was the previous author's discretion and may be
-removed. Check both files before deleting something that looks arbitrary.
-
-## Keep it DRY
-
-Each fact lives in exactly one of these files. Cross-reference by slug or
-anchor; never restate. README.md indexes these documents rather than
-duplicating them.
+Traceable to a requirement or a standing decision: keep it. Traceable to
+neither: it was somebody's discretion, so delete it freely. Check both files
+before deleting anything that looks arbitrary.
