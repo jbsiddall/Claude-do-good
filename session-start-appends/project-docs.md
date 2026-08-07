@@ -1,6 +1,6 @@
 # Project documentation
 
-Five files at the repository root. Each is defined by when you read it; the rule
+Four files at the repository root. Each is defined by when you read it; the rule
 for writing to it is the same rule backwards. Read the relevant one before
 acting. Never restate one file's content in another.
 
@@ -21,40 +21,32 @@ Headings are stable slugs. Reword a body freely; never rename a slug, because
 code links to its anchor. Changing or deleting a requirement means deleting its
 rows in REQUIREMENTS_DISCREPANCIES.md in the same change.
 
-## REQUIREMENTS_DISCREPANCIES.md — every known-bad thing that was triaged
+## REQUIREMENTS_DISCREPANCIES.md — accepted shortfalls
 
-Read whenever something looks wrong, before reporting it as new.
+Read whenever you find the implementation not matching a requirement.
 
-- Listed: known. If the row names a requirement, open REQUIREMENTS.md and
-  confirm the slug is still there. Gone means the row is stale — report it.
+- Listed: known. Still open REQUIREMENTS.md and confirm the slug is still there.
+  Gone means the row is stale — report it.
 - Not listed: not triaged. Report it. Never assume it was accepted.
 
-Write a row when a known-bad thing is accepted or triaged. Delete it when fixed.
+Write a row when a shortfall is accepted. Delete the row when it is fixed.
 
 ```markdown
-| Subject | Reason | Basis |
+| Requirement | Reason | Basis |
 | --- | --- | --- |
 | [mic-permission](REQUIREMENTS.md#mic-permission) | not feasible | No API persists a getUserMedia grant — [Browser](DOMAIN_KNOWLEDGE.md#browser) |
 | [dark-mode](REQUIREMENTS.md#dark-mode) | not implemented | #412 |
-| [export-transcript](REQUIREMENTS.md#export-transcript) | by policy | [transcript-export](IMPLEMENTATION_DECISIONS.md#transcript-export) |
-| `session_test.ts` flakes ~3 runs in 200, timing, undiagnosed | bug | #431 |
-| Per-session dirs under `run/` are never pruned | by policy | [session-dirs](IMPLEMENTATION_DECISIONS.md#session-dirs) |
+| [copy-message](REQUIREMENTS.md#copy-message) | bug | #398 |
 ```
 
-`Subject` is a requirement link, or — when no requirement covers it — the thing
-itself in one line. A flaky test, an unpruned directory, a test-only import
-reachable from production: no slug, still a row.
-
-`Reason` is exactly one of `not feasible`, `by policy`, `not implemented`,
-`bug`. The first two mean stop; the other two mean known but still open.
+`Reason` is exactly one of `not feasible`, `not implemented`, `bug`. Only
+`not feasible` means stop; the other two mean known but still open.
 
 `Basis` is required, and is one sentence or a link. `not feasible` points at a
 dated DOMAIN_KNOWLEDGE.md anchor, so it can be re-checked when the world
-changes. `by policy` — feasible, deliberately withheld or deliberately lived
-with — points at the IMPLEMENTATION_DECISIONS.md anchor that decided it. `bug`
-carries an issue link — open the issue first if there is none.
+changes. `bug` carries an issue link — open the issue first if there is none.
 
-Every triaged known-bad thing appears here. Not every bug does. Absence means
+Every accepted shortfall appears here. Not every bug does. Absence means
 untriaged, never "does not exist".
 
 ## DOMAIN_KNOWLEDGE.md — how external things really behave
@@ -106,23 +98,6 @@ DOMAIN_KNOWLEDGE.md — link its anchor rather than copying it.
 This is a living document, not a log: replace a reversed entry in place, cost
 and evidence with it. Git holds the history, and the person deleting an entry is
 the one who needed to read it.
-
-## DEVELOPMENT.md — how the work is done
-
-The other four describe the product. This one describes building, testing,
-releasing and CI. Read before running a build, a test suite or a release, and
-before touching CI.
-
-Write only what the repo does not already say: what is deliberately not
-enforced, what a task quietly does not do, which step is not the obvious one.
-
-```
-Yes: `deno lint` is deliberately not a CI gate. Only `deno check` and
-     `deno test` block a merge.
-Yes: `task dev` passes no `--config`, so it silently ignores
-     ~/.config/app/config.toml. Run `deno task dev --config <path>` instead.
-No:  `deno test` runs the tests.     <- deno.json already says so
-```
 
 ## Deleting code
 
