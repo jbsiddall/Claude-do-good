@@ -71,14 +71,13 @@ requires_any: REQUIREMENTS.md, DOMAIN_KNOWLEDGE.md
 
 A file declaring `requires_any` is appended only when at least one of those paths exists in the working directory, and gains a line saying which are present and which are not. Without the key, a file is always appended. That is how the documentation convention above costs nothing in repositories that don't use it.
 
-## Skills
+### Git
 
-Two skills, both auto-triggering — you don't invoke them, Claude reaches for them at the right moment.
+`session-start-appends/git.md` covers committing and opening pull requests: scan the staged diff for credentials, branch off the default branch first, subject imperative and under 72 characters, body explaining why rather than what, and open a PR when the work is done rather than leaving commits sitting on a branch.
 
-- **`git-commit`** — fires whenever a commit is about to happen. Reviews what is staged (including a check for credentials caught by a broad `git add`), branches off the default branch first, then writes a subject in imperative mood under 72 characters with a body that explains *why*.
-- **`ship-it`** — fires when work is finished and code has changed. Runs the project's checks, reviews the whole branch rather than the last commit, pushes, and opens a PR whose body leads with what changed and why, states what was deliberately left undone, and names the commands used to verify.
+It is deliberately an append rather than a skill. A skill only fires when Claude decides to invoke it; an appended instruction is always in context and can't be missed.
 
-Both write in **caveman-lite** — no filler or hedging, but articles and full sentences kept, because a commit message and a PR body are persisted prose a human reads later. This is deliberately not the session's caveman level: caveman's own rules exempt persisted artifacts from compression, and the skills reference the register rather than switching the session, so neither one changes how Claude talks to you.
+Commit messages and PR bodies are written in **caveman-lite** — terse, but articles and full sentences kept, because a human reads them months later. The append files themselves are written in full caveman, since they are prompt rather than documentation and their cost is paid on every session.
 
 ## Status: not published yet
 
@@ -148,6 +147,5 @@ that path is clean, but it's the surface to re-check when bumping the pin.
 - `.claude-plugin/marketplace.json` — lets this repo be added as a marketplace, and pins the caveman and ponytail dependencies by `sha`
 - `.mcp.json` — configures the Tavily MCP server
 - `hooks/hooks.json`, `scripts/check-tavily-key.ts` — warns at session start if `TAVILY_API_KEY` is missing (requires Deno)
-- `session-start-appends/*.md` — markdown appended to every session's context; currently the [project documentation rules](#project-documentation-rules)
+- `session-start-appends/*.md` — markdown appended to every session's context: the [project documentation rules](#project-documentation-rules) and the [git rules](#git)
 - `scripts/session-start-appends.ts` — reads that directory and appends it (requires Deno)
-- `skills/git-commit/`, `skills/ship-it/` — auto-triggering [skills](#skills) for commits and pull requests
