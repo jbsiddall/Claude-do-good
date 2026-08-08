@@ -18,15 +18,14 @@ Tavily needs `TAVILY_API_KEY`. Missing? Hook says how, at session start.
 
 - `session-start-appends/*.md` — appended to every session's context, filename
   order. Add file, done. Currently: project documentation convention, git rules
-  for commits and PRs, subagent worktree convention.
+  for commits and PRs, subagent worktree and pull-request workflow.
 - `scripts/session-start-appends.ts` — reads that directory. Needs Deno.
 - `scripts/check-tavily-key.ts` — warns on missing key, says how to set it.
-- `scripts/worktree-reminder.ts` — on `SubagentStop`, names any worktree left
-  holding work. Silent when none.
 - `output-styles/eli5.md` — the style.
-- `.mcp.json` — Tavily server. `hooks/hooks.json` — all three hooks.
-- `.claude/settings.json` — `worktree.baseRef: head`, so subagent worktrees
-  branch from current HEAD, not `origin/main`.
+- `.mcp.json` — Tavily server. `hooks/hooks.json` — both hooks.
+
+No `worktree.baseRef` override. The default, `fresh`, branches from
+`origin/<default-branch>`, which is what the pull-request workflow wants.
 
 Nothing writes to disk. Appends go to session context, not `CLAUDE.md`. Disable
 plugin, text gone.
